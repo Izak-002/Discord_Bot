@@ -25,7 +25,10 @@ api_instance = giphy_client.DefaultApi()
 def search_gifs(query):
 
     try:
-        return api_instance.gifs_search_get(giphy_api_key, query, rating='g')
+        return api_instance.gifs_search_get(giphy_api_key,
+                                            query,
+                                            limit=5,
+                                            rating='g')
 
     except ApiException as e:
         return "Exception when calling DefaultApi->gifs_search_get: %s\n" % e
@@ -62,6 +65,13 @@ async def on_message(message):
     if message.content.startswith('$rikka'):
         await message.channel.send(gif_response('rikka'))
 
+    # help for commands-------------------------------
+    if message.content.startswith('$help'):
+        await message.channel.send('the following commands are available: \n'
+                                   'uwu  --- returns a random anime gif ^-^ \n'
+                                   '$rikka  --- returns a random rikka gif ^-^'
+                                   )
+
 
 @client.event
 async def on_member_join(member):
@@ -75,8 +85,12 @@ async def on_member_join(member):
     await member.add_roles(role, reason=None, atomic=True)
 
     gifs = api_instance.gifs_search_get(giphy_api_key, 'loli', rating='g')
-    gif = gifs.data[4]
+    gif = gifs.data[2]
     await member.dm_channel.send(gif.url)
+
+    for channel in member.guild.channels:
+        if str(channel) == 'general':
+            await channel.send(f'Welcome the new weirdo {member.mention} ^-^')
 
 
 client.run(TOKEN)
