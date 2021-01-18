@@ -36,7 +36,7 @@ def search_gifs(query):
     try:
         return api_instance.gifs_search_get(giphy_api_key,
                                             query,
-                                            limit=5,
+                                            limit=6,
                                             rating='g')
 
     except ApiException as e:
@@ -67,8 +67,15 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
+    bad_words = ['bad', 'test', 'anime']
+
+    for word in bad_words:
+        if message.content.count(word) > 0:
+            await message.channel.purge(limit=1)
+            await message.channel.send(f"How dare you hurt rikka's feelings")
+
+    if message.content.lower().startswith('im'):
+        await message.channel.send(f'hey{message.content[2:]} Im dad ^-^')
 
     if message.content.startswith('uwu'):
         await message.channel.send('ara ara onii-chan')
