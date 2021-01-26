@@ -6,6 +6,7 @@ from giphy_client.rest import ApiException
 from dotenv import load_dotenv
 import requests
 import json
+from mal import *
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -64,6 +65,15 @@ def get_quote():
     return quote
 
 
+def get_anime_quote():
+    response = requests.get('https://animechanapi.xyz/api/quotes/random')
+    json_data = json.loads(response.text)
+    # data = json_data['data'][0]['quote']
+    quote = json_data['data'][0]['quote'] + ' - said by ' + json_data['data'][
+        0]['character'] + ' - ' + json_data['data'][0]['anime']
+    return quote
+
+
 @bot.event
 async def on_ready():
     print('We have logged in as {}'.format(bot.user))
@@ -94,6 +104,12 @@ async def on_message(message):
     #         f'{message.author.mention} pats {message.mentions[0].mention}\n')
 
 
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandInvokeError):
+        await ctx.channel.send(str(error.original))
+
+
 # bot commands---------------------------------------
 
 # @bot.command(
@@ -108,7 +124,7 @@ async def on_message(message):
 
 
 @bot.command(help='Just use $rikka to activate command',
-             brief='When command is used it shows random gif of rikka')
+             brief='shows random gif of rikka')
 async def rikka(ctx):
 
     await ctx.channel.send(gif_response('rikka'))
@@ -116,7 +132,7 @@ async def rikka(ctx):
 
 @bot.command(
     help='use $pat and someones username to actiavte command e.g. [$pat @jack]',
-    brief='when used it wil send a headpat gif to someone ^-^')
+    brief='send a headpat gif to someone ^-^')
 async def pat(ctx, user: discord.Member):
 
     gifs = api_instance.gifs_search_get(giphy_api_key,
@@ -130,7 +146,7 @@ async def pat(ctx, user: discord.Member):
 
 @bot.command(
     help='use $hug and someones username to activate command e.g. [$hug @jack]',
-    brief='When used it wil send a hug gif to someone :)')
+    brief='send a hug gif to someone :)')
 async def hug(ctx, user: discord.Member):
 
     gifs = api_instance.gifs_search_get(giphy_api_key,
@@ -142,12 +158,82 @@ async def hug(ctx, user: discord.Member):
     await ctx.channel.send(gif.url)
 
 
-@bot.command(help='use $wise to get random quote',
-             brief='When used it will show a random quote')
+@bot.command(help='use $wise to get random quote', brief='show a random quote')
 async def wise(ctx):
 
     quote = get_quote()
     await ctx.channel.send(quote)
+
+
+@bot.command(help='use $aq to get a random anime quote',
+             brief='show a random anime quote')
+async def aq(ctx):
+
+    quote = get_anime_quote()
+    await ctx.channel.send(quote)
+
+
+@bot.command(help='use $alist to show anime options e.g. $alist rezero',
+             brief='show names and ID of anime')
+async def alist(ctx):
+    anime_search = ctx.message.content[7:]
+    anime = AnimeSearch(anime_search)
+    anime_results = anime.results[:7]
+    results = ''
+    for anime in anime_results:
+        results = results + '' + anime.title + '[' + str(
+            anime.mal_id) + ']' + '\n'
+        # await ctx.channel.send(anime.title)
+
+    # anime_id = anime.results.mal_id
+    await ctx.channel.send(
+        results + '\n' +
+        'Tip use the numbers after title to use the $info command')
+
+    # await ctx.channel.send(anime_id)
+
+    # await ctx.channel.send(anime_search)
+    # anime = AnimeSearch(anime_search)
+    # ctx.channel.send(anime.results[0].title)
+
+
+@bot.command(help='use $info and anime ID to get info on it',
+             brief='shows info on anime')
+async def info(ctx):
+    anime_id = ctx.message.content[6:]
+    anime = Anime(anime_id)
+    # anime_search = ctx.message.content[6:]
+    # anime_result = AnimeSearch(anime_search)
+    # results = anime_result.results[1]
+    # anime_id = results.mal_id
+    # anime = Anime(anime_id)
+
+    # await ctx.channel.send(anime.title + '\n' + anime.synopsis + '\n' +
+    #                        str(anime.popularity) + '\n' + str(anime.rank) +
+    #                        '\n' + ' '.join(anime.genres))
+    embed = discord.Embed(title=anime.title,
+                          description=anime.synopsis + '\n' + '\n' +
+                          'Genres: ' + ' ,'.join(anime.genres),
+                          color=0x00ffdd)
+    # embed.set_image(url=ctx.author.avatar_url)
+    embed.set_thumbnail(url=anime.image_url)
+
+    embed.set_author(name=ctx.author.display_name +
+                     ' requested info on an anime',
+                     icon_url=ctx.author.avatar_url)
+
+    embed.add_field(name='Popularity',
+                    value=str(anime.popularity),
+                    inline=True)
+
+    embed.add_field(name='Anime Rank', value=str(anime.rank), inline=True)
+
+    embed.add_field(name='Episodes', value=str(anime.episodes), inline=False)
+
+    embed.set_footer(text='Studios ' + ','.join(anime.studios) + '\nType: ' +
+                     anime.type)
+
+    await ctx.channel.send(embed=embed)
 
 
 # -----------------------------------------------------
