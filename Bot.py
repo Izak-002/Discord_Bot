@@ -11,6 +11,9 @@ from mal import *
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 giphy_api_key = os.getenv('GIPHY_KEY')
+
+
+
 bot = discord.Client()
 
 # ---------------------------------------------------
@@ -64,7 +67,7 @@ def get_quote():
     quote = json_data[0]['q'] + ' - said by ' + json_data[0]['a']
     return quote
 
-
+# gets anime quote
 def get_anime_quote():
     response = requests.get('https://animechanapi.xyz/api/quotes/random')
     json_data = json.loads(response.text)
@@ -74,6 +77,12 @@ def get_anime_quote():
     return quote
 
 
+
+
+
+
+
+# --------------------------------------------------------------------
 @bot.event
 async def on_ready():
     print('We have logged in as {}'.format(bot.user))
@@ -110,18 +119,9 @@ async def on_command_error(ctx, error):
         await ctx.channel.send(str(error.original))
 
 
+
+
 # bot commands---------------------------------------
-
-# @bot.command(
-# ADDS THIS VALUE TO THE $HELP PING MESSAGE.
-# help=
-# "Uses come crazy logic to determine if pong is actually the correct value or not.",
-# ADDS THIS VALUE TO THE $HELP MESSAGE.
-# brief="Prints pong back to the channel.")
-# async def ping(ctx):
-# SENDS A MESSAGE TO THE CHANNEL USING THE CONTEXT OBJECT.
-# await ctx.channel.send("pong")
-
 
 @bot.command(help='Just use $rikka to activate command',
              brief='shows random gif of rikka')
@@ -135,13 +135,22 @@ async def rikka(ctx):
     brief='send a headpat gif to someone ^-^')
 async def pat(ctx, user: discord.Member):
 
-    gifs = api_instance.gifs_search_get(giphy_api_key,
-                                        'anime pat',
-                                        limit=6,
-                                        rating='g')
-    gif = gifs.data[1]
-    await ctx.channel.send(f'{ctx.author.name} pats {user.mention}\n')
-    await ctx.channel.send(gif.url)
+
+    embed = discord.Embed(description=f'**{ctx.author.name}** pats {user.mention}',
+                          color=0x00ffdd)
+
+    gifs = [
+        'https://media.giphy.com/media/4HP0ddZnNVvKU/giphy.gif',
+        'https://media.giphy.com/media/5tmRHwTlHAA9WkVxTU/giphy.gif',
+        'https://media.giphy.com/media/109ltuoSQT212w/giphy.gif',
+        'https://media.giphy.com/media/L2z7dnOduqEow/giphy.gif'
+    ]
+
+    gif = random.choice(gifs)
+    embed.set_image(url=gif)
+
+    
+    await ctx.channel.send(embed=embed)
 
 
 @bot.command(
@@ -149,13 +158,23 @@ async def pat(ctx, user: discord.Member):
     brief='send a hug gif to someone :)')
 async def hug(ctx, user: discord.Member):
 
-    gifs = api_instance.gifs_search_get(giphy_api_key,
-                                        'Anime hug',
-                                        limit=50,
-                                        rating='g')
-    gif = gifs.data[16]
-    await ctx.channel.send(f'{ctx.author.name} hugs {user.mention}\n')
-    await ctx.channel.send(gif.url)
+    embed = discord.Embed(description=f'**{ctx.author.name}** hugs {user.mention}',
+                          color=0x00ffdd)
+    gifs = [
+        'https://media.giphy.com/media/3bqtLDeiDtwhq/giphy.gif',
+        'https://media.giphy.com/media/PHZ7v9tfQu0o0/giphy.gif',
+        'https://media.giphy.com/media/VXP04aclCaUfe/giphy.gif',
+        'https://media.giphy.com/media/ZQN9jsRWp1M76/giphy.gif'
+    ]
+  
+    gif = random.choice(gifs)
+    embed.set_image(url=gif)
+
+    # await ctx.channel.send(f'{ctx.author.name} hugs {user.mention}\n')
+    await ctx.channel.send(embed=embed)
+
+
+
 
 
 @bot.command(help='use $wise to get random quote', brief='show a random quote')
@@ -165,12 +184,16 @@ async def wise(ctx):
     await ctx.channel.send(quote)
 
 
+
+
 @bot.command(help='use $aq to get a random anime quote',
              brief='show a random anime quote')
 async def aq(ctx):
 
     quote = get_anime_quote()
     await ctx.channel.send(quote)
+
+
 
 
 @bot.command(help='use $alist to show anime options e.g. $alist rezero',
@@ -195,6 +218,7 @@ async def alist(ctx):
     # await ctx.channel.send(anime_search)
     # anime = AnimeSearch(anime_search)
     # ctx.channel.send(anime.results[0].title)
+
 
 
 @bot.command(help='use $info and anime ID to get info on it',
@@ -254,9 +278,17 @@ async def on_member_join(member):
     gif = gifs.data[1]
     await member.dm_channel.send(gif.url)
 
+    num_of_bots = 0
+    members = member.guild.members
+    for m in members:
+        if m.bot:
+            num_of_bots = num_of_bots + 1
+    member_count = member.guild.member_count
+    total_members = member_count - num_of_bots
+
     for channel in member.guild.channels:
         if str(channel) == 'general':
-            await channel.send(f'Welcome {member.mention} to the server ^-^')
+            await channel.send(f'Welcome {member.mention} to the server ^-^ ' + f'You are now one of the {str(total_members)} members of the server')
 
 
 bot.run(TOKEN)
