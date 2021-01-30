@@ -194,9 +194,9 @@ async def aq(ctx):
 
 
 
-@bot.command(help='use $alist to show anime options e.g. $alist rezero',
+@bot.command(help='use $anime to show anime options e.g. $alist rezero',
              brief='show names and ID of anime')
-async def alist(ctx):
+async def anime(ctx):
     anime_search = ctx.message.content[7:]
     anime = AnimeSearch(anime_search)
     anime_results = anime.results[:7]
@@ -224,6 +224,7 @@ async def alist(ctx):
         description = 'To see info on an anime use ```$info and the anime ID```' + '\n' + results + '\n',
         colour = discord.Colour.green()
     )
+    page1.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
 
     # page1.add_field(name='```Help```', value='use $info and the anime ID to get more info on anime', inline=False)
 
@@ -300,6 +301,35 @@ async def info(ctx):
 
     await ctx.channel.send(embed=embed)
 
+
+
+
+@bot.command(help='use $purge and number of message to delete',
+             brief='Delete messages')
+async def purge(ctx, number='2'):
+
+    # def is_me(m):
+    #     return m.author.id == 782945630837932042
+    if ctx.author.id == 782945630837932042: 
+
+        if number == '*':
+            limit = 100
+        else:
+            limit = int(number)
+
+        deleted = await ctx.channel.purge(limit=limit + 1)
+
+        embed = discord.Embed(
+                              description='```Deleted {} message(s)```'.format(len(deleted) - 1),
+                              color= discord.Colour.orange())
+        embed.set_author(name=ctx.author.display_name +
+                     ' Purged messages',
+                     icon_url=ctx.author.avatar_url)
+
+        await ctx.channel.send(embed=embed)
+
+    else:
+        await ctx.channel.send('Nice Try ^^')
 
 # -----------------------------------------------------
 
