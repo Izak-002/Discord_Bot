@@ -72,8 +72,7 @@ def get_anime_quote():
     response = requests.get('https://animechanapi.xyz/api/quotes/random')
     json_data = json.loads(response.text)
     # data = json_data['data'][0]['quote']
-    quote = json_data['data'][0]['quote'] + ' - said by ' + json_data['data'][
-        0]['character'] + ' - ' + json_data['data'][0]['anime']
+    quote = json_data['data'][0]['quote'] + ' - said by ' + json_data['data'][0]['character'] + ' - ' + json_data['data'][0]['anime']
     return quote
 
 
@@ -113,10 +112,10 @@ async def on_message(message):
     #         f'{message.author.mention} pats {message.mentions[0].mention}\n')
 
 
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandInvokeError):
-        await ctx.channel.send(str(error.original))
+# @bot.event
+# async def on_command_error(ctx, error):
+#     if isinstance(error, commands.CommandInvokeError):
+#         await ctx.channel.send(str(error.original))
 
 
 
@@ -163,7 +162,6 @@ async def hug(ctx, user: discord.Member):
     gifs = [
         'https://media.giphy.com/media/3bqtLDeiDtwhq/giphy.gif',
         'https://media.giphy.com/media/PHZ7v9tfQu0o0/giphy.gif',
-        'https://media.giphy.com/media/VXP04aclCaUfe/giphy.gif',
         'https://media.giphy.com/media/ZQN9jsRWp1M76/giphy.gif'
     ]
   
@@ -202,27 +200,70 @@ async def alist(ctx):
     anime_search = ctx.message.content[7:]
     anime = AnimeSearch(anime_search)
     anime_results = anime.results[:7]
+    anime_results2 = anime.results[7:14]
     results = ''
+    results2 = ''
     for anime in anime_results:
-        results = results + '' + anime.title + '[' + str(
-            anime.mal_id) + ']' + '\n'
+        results = results  + '**[' + str(
+            anime.mal_id) + ']**' + anime.title + '\n'
+
+    for anime in anime_results2:
+        results2 = results2 + '**[' + str(
+            anime.mal_id) + ']**' + anime.title + '\n'
         # await ctx.channel.send(anime.title)
 
     # anime_id = anime.results.mal_id
-    await ctx.channel.send(
-        results + '\n' +
-        'Tip use the numbers after title to use the $info command')
-
-    # await ctx.channel.send(anime_id)
-
-    # await ctx.channel.send(anime_search)
-    # anime = AnimeSearch(anime_search)
-    # ctx.channel.send(anime.results[0].title)
+    # await ctx.channel.send(
+    #     results + '\n' +
+    #     'Tip use the numbers after title to use the $info command')
 
 
 
-@bot.command(help='use $info and anime ID to get info on it',
-             brief='shows info on anime')
+    page1 = discord.Embed (
+        title = 'Page 1/2',
+        description = 'To see info on an anime use ```$info and the anime ID```' + '\n' + results + '\n',
+        colour = discord.Colour.green()
+    )
+
+    # page1.add_field(name='```Help```', value='use $info and the anime ID to get more info on anime', inline=False)
+
+    page2 = discord.Embed (
+        title = 'Page 2/2',
+        description = 'To see info on an anime use ```$info and the anime ID```' + '\n' + results2 + '\n',
+        colour = discord.Colour.green()
+    )
+    
+    pages = [page1, page2]
+
+    message = await ctx.send(embed = page1)
+    await message.add_reaction('◀')
+    await message.add_reaction('▶')
+
+    def check(reaction, user):
+        return user == ctx.author
+
+    i = 0
+    reaction = None
+
+    while True:
+        try:
+            reaction, user = await bot.wait_for('reaction_add', check = check)
+            await message.remove_reaction(reaction, user)
+
+            if str(reaction) == '▶':
+                if i < 1:
+                    i += 1
+                    await message.edit(embed = pages[i])
+            elif str(reaction) == '◀':
+                if i > 0:
+                    i -= 1
+                    await message.edit(embed = pages[i])
+
+        except:
+            break
+
+
+@bot.command()
 async def info(ctx):
     anime_id = ctx.message.content[6:]
     anime = Anime(anime_id)
